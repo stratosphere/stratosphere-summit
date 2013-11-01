@@ -20,10 +20,18 @@ class Task2 extends PlanAssembler with PlanAssemblerDescription with Serializabl
     
     val source = TextFile(inputPath)
     
-    // Here you should split the line into the doc id and the content.
-    // Then output a (word, count) tuple for every word in the document
-    // You could use a map to keep counts of the words.
     val termFrequencies = source flatMap { line =>
+      val Array(docId, doc) = line.split(",")
+      doc.toLowerCase()
+        .split("""\W+""")
+        .filter { !Util.STOP_WORDS.contains(_) }
+        .foldLeft(new HashMap[String, Int]) { (map, word) =>
+          map get(word) match {
+            case Some(x) => map += (word -> (x+1))   //if in map already, increment count
+            case None => map += (word -> 1)          //otherwise, set to 1
+          }
+        }
+        .map { case (word, count) => (docId, word, count) }
     }
     
     val sink = termFrequencies.write(outputPath, RecordDataSinkFormat("\n", ","))

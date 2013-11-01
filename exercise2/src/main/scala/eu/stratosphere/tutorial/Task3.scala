@@ -20,28 +20,45 @@ class Task3 extends PlanAssembler with PlanAssemblerDescription with Serializabl
     
     val source = TextFile(inputPath)
     
-    // Copy this from task 1
+    // This part is from Task1
     val termOccurences = source flatMap { line =>
+      val Array(docId, doc) = line.split(",")
+      doc.toLowerCase()
+        .split("""\W+""")
+        .filter { !Util.STOP_WORDS.contains(_) }
+        .toSet[String]
+        .map { w => (w, 1) }
     }
     
     val documentFrequencies = termOccurences
-      .groupBy {  }
-      .reduce {  }
+      .groupBy { case (w, _) => w }
+      .reduce { (w1, w2) => (w1._1, w1._2 + w2._2) }
     
-    // Copy this from task 2
+    // This part is from Task1
     val termFrequencies = source flatMap { line =>
+      val Array(docId, doc) = line.split(",")
+      doc.toLowerCase()
+        .split("""\W+""")
+        .filter { !Util.STOP_WORDS.contains(_) }
+        .foldLeft(new HashMap[String, Int]) { (map, word) =>
+          map get(word) match {
+            case Some(x) => map += (word -> (x+1))   //if in map already, increment count
+            case None => map += (word -> 1)          //otherwise, set to 1
+          }
+        }
+        .map { case (word, count) => (docId, word, count) }
     }
     
-    // Here you should join the document frequencies with
-    // the word frequencies and compute the Tf-Idf.
-    // The output should be a tuple (docId, word, tf-idf)
-    // You can get the total number of documents using Util.NUM_DOCUMENTS.
+    // This is Task3
     val  tfIdf = documentFrequencies
       .join(termFrequencies)
-      .where { }
-      .isEqualTo {  }
+      .where { case (w, _) => w }
+      .isEqualTo { case (_, w, _) => w }
       .map { (left, right) =>
-      }
+        val (word, docFreq) = left
+        val (docId, _, termFreq) = right
+        (docId, word, termFreq * Math.log(Util.NUM_DOCUMENTS / docFreq))
+    }
     
     val sink = tfIdf.write(outputPath, RecordDataSinkFormat("\n", ","))
     

@@ -19,16 +19,18 @@ class Task1 extends PlanAssembler with PlanAssemblerDescription with Serializabl
     
     val source = TextFile(inputPath)
     
-    // Here you should split the line into the doc id and the content.
-    // Then output a (word, 1) tuple for every word in the document
-    // while counting every word only once
     val termOccurences = source flatMap { line =>
+      val Array(docId, doc) = line.split(",")
+      doc.toLowerCase()
+        .split("""\W+""")
+        .filter { !Util.STOP_WORDS.contains(_) }
+        .toSet[String]
+        .map { w => (w, 1) }
     }
     
-    // Here you should sum up the frequencies for the words
     val documentFrequencies = termOccurences
-      .groupBy {  }
-      .reduce { (w1, w2) =>  }
+      .groupBy { case (w, _) => w }
+      .reduce { (w1, w2) => (w1._1, w1._2 + w2._2) }
     
     val sink = documentFrequencies.write(outputPath, RecordDataSinkFormat("\n", ","))
     
