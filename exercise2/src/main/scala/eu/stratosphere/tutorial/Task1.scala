@@ -19,18 +19,12 @@ class Task1 extends PlanAssembler with PlanAssemblerDescription with Serializabl
     
     val source = TextFile(inputPath)
     
-    val termOccurences = source flatMap { line =>
-      val Array(docId, doc) = line.split(",")
-      doc.toLowerCase()
-        .split("""\W+""")
-        .filter { !Util.STOP_WORDS.contains(_) }
-        .toSet[String]
-        .map { w => (w, 1) }
+    val termOccurences = source flatMap { line => 
     }
     
     val documentFrequencies = termOccurences
-      .groupBy { case (w, _) => w }
-      .reduce { (w1, w2) => (w1._1, w1._2 + w2._2) }
+      .groupBy { }
+      .reduce { (w1, w2) => }
     
     val sink = documentFrequencies.write(outputPath, RecordDataSinkFormat("\n", ","))
     
