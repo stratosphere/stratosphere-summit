@@ -20,7 +20,7 @@ class Task4 extends PlanAssembler with PlanAssemblerDescription with Serializabl
     
     val source = TextFile(inputPath)
     
-    // This part is from Task1
+    // Solution for Task 1
     val termOccurences = source flatMap { line =>
       val Array(docId, doc) = line.split(",")
       doc.toLowerCase()
@@ -34,7 +34,7 @@ class Task4 extends PlanAssembler with PlanAssemblerDescription with Serializabl
       .groupBy { case (w, _) => w }
       .reduce { (w1, w2) => (w1._1, w1._2 + w2._2) }
     
-    // This part is from Task2
+    // Solution for Task 2
     val termFrequencies = source flatMap { line =>
       val Array(docId, doc) = line.split(",")
       doc.toLowerCase()
@@ -49,7 +49,7 @@ class Task4 extends PlanAssembler with PlanAssemblerDescription with Serializabl
         .map { case (word, count) => (docId, word, count) }
     }
     
-    // This part is from Task3
+    // Solution for Task 3
     val  tfIdf = documentFrequencies
       .join(termFrequencies)
       .where { case (w, _) => w }
@@ -62,12 +62,8 @@ class Task4 extends PlanAssembler with PlanAssemblerDescription with Serializabl
       
     // This is Task4
     val tfIdfPerDocument = tfIdf
-      .groupBy { case (doc, _, _) => doc }
+      .groupBy {  }
       .reduceGroup { values =>
-        val buffered = values.buffered
-        val (docId, _, _) = buffered.head
-        val weightList = buffered map { t => (t._2, t._3) }
-        WeightVector(docId, weightList)
       }
     
     val sink = tfIdfPerDocument.write(outputPath, DelimitedDataSinkFormat(formatOutput _))

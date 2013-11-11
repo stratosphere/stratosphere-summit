@@ -8,7 +8,7 @@ import eu.stratosphere.scala.operators._
 
 import scala.collection.mutable.HashMap
 
-class Task3 extends PlanAssembler with PlanAssemblerDescription with Serializable {
+class Task4 extends PlanAssembler with PlanAssemblerDescription with Serializable {
   override def getDescription() = {
     "Usage: [inputPath] [outputPath] ([numSubtasks])"
   }
@@ -49,22 +49,41 @@ class Task3 extends PlanAssembler with PlanAssemblerDescription with Serializabl
         .map { case (word, count) => (docId, word, count) }
     }
     
-    // This is Task3
+    // Solution for Task 3
     val  tfIdf = documentFrequencies
       .join(termFrequencies)
-      .where { }
-      .isEqualTo {  }
+      .where { case (w, _) => w }
+      .isEqualTo { case (_, w, _) => w }
       .map { (left, right) =>
+        val (word, docFreq) = left
+        val (docId, _, termFreq) = right
+        (docId, word, termFreq * Math.log(Util.NUM_DOCUMENTS / docFreq))
     }
+      
+    // Solution for Task 4
+    val tfIdfPerDocument = tfIdf
+      .groupBy { case (doc, _, _) => doc }
+      .reduceGroup { values =>
+        val buffered = values.buffered
+        val (docId, _, _) = buffered.head
+        val weightList = buffered map { t => (t._2, t._3) }
+        WeightVector(docId, weightList)
+      }
     
-    val sink = tfIdf.write(outputPath, RecordDataSinkFormat("\n", ","))
+    val sink = tfIdfPerDocument.write(outputPath, DelimitedDataSinkFormat(formatOutput _))
     
     new ScalaPlan(Seq(sink))
-    
   }
+  
+  def formatOutput(w: WeightVector) = {
+    val terms = w.terms map { case (word, tfIdf) => word + ", " + tfIdf }
+    w.docId + ": " + terms.mkString("; ")
+  }
+  
+  case class WeightVector(docId: String, terms: Iterator[(String, Double)])
 }
 
-object RunTask3 {
+object RunTask4 {
   def main(args: Array[String]) {
     // Write test input to temporary directory
     val inputPath = Util.createTempDir("input")
@@ -76,22 +95,12 @@ object RunTask3 {
     // Replace this with your own path, e.g. "file:///path/to/results/"
     val outputPath = "file:///home/aljoscha/tf-idf-out"
 
-    // Results should be:
-    //
-    // Document 1:
-    // 1 big 0.0
-    // 1 hello 0.0
-    // 1 stratosphere 0.69...
-    //
-    // Document 2:
-    // 2 hello 0.0
-    // 2 big 0.0
-    // 2 data 0.69...
+    // Results should be: same Tf-Idf values as in task 3 as a WeightVector per Document
 
     println("Reading input from " + inputPath)
     println("Writing output to " + outputPath)
 
-    val plan = new Task3().getPlan(inputPath, outputPath)
+    val plan = new Task4().getPlan(inputPath, outputPath)
     Util.executePlan(plan)
 
     Util.deleteAllTempFiles()
