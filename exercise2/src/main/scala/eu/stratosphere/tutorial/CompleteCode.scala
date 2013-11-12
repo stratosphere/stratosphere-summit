@@ -8,7 +8,7 @@ import eu.stratosphere.scala.operators._
 
 import scala.collection.mutable.HashMap
 
-class Task4 extends PlanAssembler with PlanAssemblerDescription with Serializable {
+class CompleteCode extends PlanAssembler with PlanAssemblerDescription with Serializable {
   override def getDescription() = {
     "Usage: [inputPath] [outputPath] ([numSubtasks])"
   }
@@ -83,7 +83,7 @@ class Task4 extends PlanAssembler with PlanAssemblerDescription with Serializabl
   case class WeightVector(docId: String, terms: Iterator[(String, Double)])
 }
 
-object RunTask4 {
+object RunCompleteCode {
   def main(args: Array[String]) {
     // Write test input to temporary directory
     val inputPath = Util.createTempDir("input")
