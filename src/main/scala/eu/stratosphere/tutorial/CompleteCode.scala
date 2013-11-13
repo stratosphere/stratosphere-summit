@@ -7,6 +7,7 @@ import eu.stratosphere.scala._
 import eu.stratosphere.scala.operators._
 
 import scala.collection.mutable.HashMap
+import scala.io.Source
 
 class CompleteCode extends PlanAssembler with PlanAssemblerDescription with Serializable {
   override def getDescription() = {
@@ -70,7 +71,7 @@ class CompleteCode extends PlanAssembler with PlanAssemblerDescription with Seri
         WeightVector(docId, weightList)
       }
     
-    val sink = tfIdfPerDocument.write(outputPath, DelimitedDataSinkFormat(formatOutput _))
+    val sink = tfIdfPerDocument.write(outputPath, DelimitedOutputFormat(formatOutput _))
     
     new ScalaPlan(Seq(sink))
   }
@@ -93,15 +94,19 @@ object RunCompleteCode {
 
     // Output
     // Replace this with your own path, e.g. "file:///path/to/results/"
-    val outputPath = "file:///home/aljoscha/tf-idf-out"
+    val outputPath = "/home/aljoscha/tf-idf-out"
 
     // Results should be: same Tf-Idf values as in task 3 as a WeightVector per Document
 
     println("Reading input from " + inputPath)
-    println("Writing output to " + outputPath)
+    println("Writing output to " + "file://" + outputPath)
 
-    val plan = new Task4().getPlan(inputPath, outputPath)
+    val plan = new CompleteCode().getPlan(inputPath, "file://" + outputPath)
     Util.executePlan(plan)
+
+    println("Result in " + outputPath + ":")
+    for(line <- Source.fromFile(outputPath).getLines())
+      println(line)
 
     Util.deleteAllTempFiles()
     System.exit(0)
