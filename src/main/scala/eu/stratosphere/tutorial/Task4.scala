@@ -91,7 +91,7 @@ object RunTask4 {
 
     // Output
     // Replace this with your own path, e.g. "file:///path/to/results/"
-    val outputPath = "/home/aljoscha/tf-idf-out"
+    val outputPath = "/home/stratosphere/tf-idf-out"
 
     // Results should be: same Tf-Idf values as in task 3 as a WeightVector per Document
 

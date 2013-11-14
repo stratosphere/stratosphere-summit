@@ -43,7 +43,7 @@ object RunTask1 {
 
     // Output
     // Replace this with your own path, e.g. "file:///path/to/results/"
-    val outputPath = "/home/aljoscha/document-frequency-out"
+    val outputPath = "/home/stratosphere/document-frequency-out"
 
     // Results should be:
     // big 2

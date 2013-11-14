@@ -76,7 +76,7 @@ object RunTask3 {
 
     // Output
     // Replace this with your own path, e.g. "file:///path/to/results/"
-    val outputPath = "/home/aljoscha/tf-idf-out"
+    val outputPath = "/home/stratosphere/tf-idf-out"
 
     // Results should be:
     //
