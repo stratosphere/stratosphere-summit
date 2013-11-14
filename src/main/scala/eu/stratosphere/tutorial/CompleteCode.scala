@@ -10,6 +10,7 @@ import scala.collection.mutable.HashMap
 import scala.io.Source
 
 class CompleteCode extends PlanAssembler with PlanAssemblerDescription with Serializable {
+  
   override def getDescription() = {
     "Usage: [inputPath] [outputPath] ([numSubtasks])"
   }
@@ -17,37 +18,49 @@ class CompleteCode extends PlanAssembler with PlanAssemblerDescription with Seri
   override def getPlan(args: String*) = {
     val inputPath = args(0)
     val outputPath = args(1)
-    val numSubTasks = if (args.size >= 3) args(2).toInt else 1
+    val numDocuments = if (args.size >= 3) args(2).toInt else Util.NUM_DOCUMENTS;
+    val numSubTasks = if (args.size >= 4) args(3).toInt else 1
     
     val source = TextFile(inputPath)
     
     // Solution for Task 1
     val termOccurences = source flatMap { line =>
-      val Array(docId, doc) = line.split(",")
-      doc.toLowerCase()
-        .split("""\W+""")
-        .filter { !Util.STOP_WORDS.contains(_) }
-        .toSet[String]
-        .map { w => (w, 1) }
+      val comma = line.indexOf(",");
+      
+      if (comma <= 0 || comma >= line.length()-1)
+        None
+      else {
+	      val doc = line.substring(comma + 1)
+	      
+	      doc.toLowerCase().split("""\W+""")
+	      	.filter(!Util.STOP_WORDS.contains(_))
+	        .toSet[String]
+      }
     }
     
     val documentFrequencies = termOccurences
-      .groupBy { case (w, _) => w }
-      .reduce { (w1, w2) => (w1._1, w1._2 + w2._2) }
+      .groupBy { w => w } .count()
     
     // Solution for Task 2
     val termFrequencies = source flatMap { line =>
-      val Array(docId, doc) = line.split(",")
-      doc.toLowerCase()
-        .split("""\W+""")
-        .filter { !Util.STOP_WORDS.contains(_) }
-        .foldLeft(new HashMap[String, Int]) { (map, word) =>
-          map get(word) match {
-            case Some(x) => map += (word -> (x+1))   //if in map already, increment count
-            case None => map += (word -> 1)          //otherwise, set to 1
-          }
-        }
-        .map { case (word, count) => (docId, word, count) }
+      val comma = line.indexOf(",");
+      
+      if (comma <= 0 || comma >= line.length()-1)
+        None
+      else {
+    	  val docId = line.substring(0, comma)
+	      val doc = line.substring(comma + 1)
+		  doc.toLowerCase()
+	      .split("""\W+""")
+	      .filter { !Util.STOP_WORDS.contains(_) }
+	      .foldLeft(new HashMap[String, Int]) { (map, word) =>
+	        map get(word) match {
+	          case Some(x) => map += (word -> (x+1))   //if in map already, increment count
+	          case None => map += (word -> 1)          //otherwise, set to 1
+	        }
+	      }
+	      .map { case (word, count) => (docId, word, count) }
+      }
     }
     
     // Solution for Task 3
@@ -58,7 +71,7 @@ class CompleteCode extends PlanAssembler with PlanAssemblerDescription with Seri
       .map { (left, right) =>
         val (word, docFreq) = left
         val (docId, _, termFreq) = right
-        (docId, word, termFreq * Math.log(Util.NUM_DOCUMENTS / docFreq))
+        (docId, word, termFreq * Math.log(numDocuments / docFreq))
     }
       
     // Solution for Task 4
@@ -68,7 +81,12 @@ class CompleteCode extends PlanAssembler with PlanAssemblerDescription with Seri
         val buffered = values.buffered
         val (docId, _, _) = buffered.head
         val weightList = buffered map { t => (t._2, t._3) }
-        WeightVector(docId, weightList)
+        
+        // sort the list after the weights and take only the 15 terms with largest weights
+        // this step is optional, it truncates the long vectors for large pages
+        val weights = weightList.toArray.sortWith((x, y) => x._2 > y._2).take(15)
+        
+        WeightVector(docId, weights)
       }
     
     val sink = tfIdfPerDocument.write(outputPath, DelimitedOutputFormat(formatOutput _))
@@ -86,12 +104,18 @@ class CompleteCode extends PlanAssembler with PlanAssemblerDescription with Seri
 
 object RunCompleteCode {
   def main(args: Array[String]) {
+    
     // Write test input to temporary directory
+    // swap these four lines for the commented two lines succeeding them to try the algorithm
+    // on sample of cleansed wikipedia data.
     val inputPath = Util.createTempDir("input")
-
     Util.createTempFile("input/1.txt", "1,Big Hello to Stratosphere! :-)")
     Util.createTempFile("input/2.txt", "2,Hello to Big Big Data.")
-
+    val numDocs = Util.NUM_DOCUMENTS;
+    
+//    val inputPath = "file:///home/stratosphere/demodata/text/wikipedia.txt"
+//    val numDocs = 10000;
+    
     // Output
     // Replace this with your own path, e.g. "file:///path/to/results/"
     val outputPath = "/home/stratosphere/tf-idf-out"
@@ -101,7 +125,7 @@ object RunCompleteCode {
     println("Reading input from " + inputPath)
     println("Writing output to " + "file://" + outputPath)
 
-    val plan = new CompleteCode().getPlan(inputPath, "file://" + outputPath)
+    val plan = new CompleteCode().getPlan(inputPath, "file://" + outputPath, numDocs.toString)
     Util.executePlan(plan)
 
     println("Result in " + outputPath + ":")
