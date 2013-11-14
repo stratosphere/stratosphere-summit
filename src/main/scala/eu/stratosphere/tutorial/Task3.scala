@@ -22,7 +22,8 @@ class Task3 extends PlanAssembler with PlanAssemblerDescription with Serializabl
 
     // Solution for Task 1
     val termOccurences = source flatMap { line =>
-      val Array(docId, doc) = line.split(",")
+      val firstComma = line.indexOf(',')
+      val (docId, doc) = line.splitAt(firstComma)
       doc.toLowerCase()
         .split("""\W+""")
         .filter { !Util.STOP_WORDS.contains(_) }
@@ -31,12 +32,13 @@ class Task3 extends PlanAssembler with PlanAssemblerDescription with Serializabl
     }
 
     val documentFrequencies = termOccurences
-      .groupBy { case (w, _) => w }
+      .groupBy { _._1 }
       .reduce { (w1, w2) => (w1._1, w1._2 + w2._2) }
 
     // Solution for Task 2
     val termFrequencies = source flatMap { line =>
-      val Array(docId, doc) = line.split(",")
+      val firstComma = line.indexOf(',')
+      val (docId, doc) = line.splitAt(firstComma)
       doc.toLowerCase()
         .split("""\W+""")
         .filter { !Util.STOP_WORDS.contains(_) }
@@ -74,7 +76,7 @@ object RunTask3 {
 
     // Output
     // Replace this with your own path, e.g. "file:///path/to/results/"
-    val outputPath = "/home/stratosphere/tf-idf-out"
+    val outputPath = "/home/aljoscha/tf-idf-out"
 
     // Results should be:
     //

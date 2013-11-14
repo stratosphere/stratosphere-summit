@@ -25,49 +25,45 @@ class CompleteCode extends PlanAssembler with PlanAssemblerDescription with Seri
     
     // Solution for Task 1
     val termOccurences = source flatMap { line =>
-      val comma = line.indexOf(",");
-      
-      if (comma <= 0 || comma >= line.length()-1)
-        None
-      else {
-	      val doc = line.substring(comma + 1)
-	      
-	      doc.toLowerCase().split("""\W+""")
-	      	.filter(!Util.STOP_WORDS.contains(_))
-	        .toSet[String]
+      line.indexOf(',') match {
+        case -1 => None
+        case pos =>
+          val (docId, doc) = line.splitAt(pos)
+          doc.toLowerCase()
+            .split("""\W+""")
+            .filter { !Util.STOP_WORDS.contains(_) }
+            .distinct
       }
     }
     
     val documentFrequencies = termOccurences
-      .groupBy { w => w } .count()
+      .groupBy { w => w }
+      .count()
     
     // Solution for Task 2
     val termFrequencies = source flatMap { line =>
-      val comma = line.indexOf(",");
-      
-      if (comma <= 0 || comma >= line.length()-1)
-        None
-      else {
-    	  val docId = line.substring(0, comma)
-	      val doc = line.substring(comma + 1)
-		  doc.toLowerCase()
-	      .split("""\W+""")
-	      .filter { !Util.STOP_WORDS.contains(_) }
-	      .foldLeft(new HashMap[String, Int]) { (map, word) =>
-	        map get(word) match {
-	          case Some(x) => map += (word -> (x+1))   //if in map already, increment count
-	          case None => map += (word -> 1)          //otherwise, set to 1
-	        }
-	      }
-	      .map { case (word, count) => (docId, word, count) }
+      line.indexOf(',') match {
+        case -1 => None
+        case pos =>
+          val (docId, doc) = line.splitAt(pos)
+          doc.toLowerCase()
+            .split("""\W+""")
+            .filter { !Util.STOP_WORDS.contains(_) }
+            .foldLeft(new HashMap[String, Int]) { (map, word) =>
+              map get(word) match {
+                case Some(x) => map += (word -> (x+1))   //if in map already, increment count
+                case None => map += (word -> 1)          //otherwise, set to 1
+              }
+            }
+            .map { case (word, count) => (docId, word, count) }
       }
     }
     
     // Solution for Task 3
     val  tfIdf = documentFrequencies
       .join(termFrequencies)
-      .where { case (w, _) => w }
-      .isEqualTo { case (_, w, _) => w }
+      .where { _._1 }
+      .isEqualTo { _._2 }
       .map { (left, right) =>
         val (word, docFreq) = left
         val (docId, _, termFreq) = right
@@ -76,7 +72,7 @@ class CompleteCode extends PlanAssembler with PlanAssemblerDescription with Seri
       
     // Solution for Task 4
     val tfIdfPerDocument = tfIdf
-      .groupBy { case (doc, _, _) => doc }
+      .groupBy { _._1 }
       .reduceGroup { values =>
         val buffered = values.buffered
         val (docId, _, _) = buffered.head
@@ -118,7 +114,7 @@ object RunCompleteCode {
     
     // Output
     // Replace this with your own path, e.g. "file:///path/to/results/"
-    val outputPath = "/home/stratosphere/tf-idf-out"
+    val outputPath = "/home/aljoscha/tf-idf-out"
 
     // Results should be: same Tf-Idf values as in task 3 as a WeightVector per Document
 

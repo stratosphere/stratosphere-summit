@@ -40,7 +40,7 @@ object RunTask2 {
 
      // Output
      // Replace this with your own path, e.g. "file:///path/to/results/"
-     val outputPath = "/home/stratosphere/term-frequency-out"
+     val outputPath = "/home/aljoscha/term-frequency-out"
 
      // Results should be:
      //
